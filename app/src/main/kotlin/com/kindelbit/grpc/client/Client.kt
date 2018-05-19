@@ -24,7 +24,7 @@ fun main(args: Array<String>) {
     val blockingClient = EmployeeServiceGrpc.newBlockingStub(channel)
     val nonBlockingClient = EmployeeServiceGrpc.newStub(channel)
 
-    val option = 4;
+    val option = 6;
     makeCall(blockingClient!!, nonBlockingClient!!, option)
 
     Thread.sleep(2000)
@@ -40,7 +40,59 @@ fun makeCall(blockingClient: EmployeeServiceGrpc.EmployeeServiceBlockingStub,
         2 -> getByBadgeNumber(blockingClient)
         3 -> getAll(blockingClient)
         4 -> addPhoto(nonBlockingClient)
+        5 -> save(blockingClient)
+        6 -> saveAll(nonBlockingClient)
     }
+}
+
+fun saveAll(client: EmployeeServiceGrpc.EmployeeServiceStub) {
+    val list = listOf<Employee>(
+            getEmployee(1010, "Stewie", "Griffin", 4f, 5f),
+            getEmployee(1011, "Maggie", "Griffin", 1f, 5f),
+            getEmployee(1012, "Chris", "Griffin", 2f, 5f)
+    )
+
+    val reqStream = client.saveAll(object : StreamObserver<EmployeeResponse> {
+        override fun onNext(value: EmployeeResponse?) {
+            println(value?.employee)
+        }
+
+        override fun onError(t: Throwable?) {
+            println(t)
+        }
+
+        override fun onCompleted() {
+            println("All employees saved")
+        }
+    })
+
+    for (e in list) {
+        reqStream.onNext(EmployeeRequest.newBuilder()
+                .setEmployee(e)
+                .build())
+    }
+    reqStream.onCompleted()
+}
+
+fun getEmployee(badge: Int, fName: String, lName: String, vacAccRate: Float, vacAccrued: Float): Employee {
+    return Employee.newBuilder()
+            .setBadgeNumber(badge)
+            .setFirstName(fName)
+            .setLastName(lName)
+            .setVacationAccrualRate(vacAccRate)
+            .setVacationAccrued(vacAccrued)
+            .build()
+}
+
+fun save(client: EmployeeServiceGrpc.EmployeeServiceBlockingStub) {
+    val e = Employee.newBuilder()
+            .setFirstName("Joe")
+            .setLastName("Swanson")
+            .setVacationAccrued(5f)
+            .setVacationAccrualRate(4.4f)
+    val response = client.save(EmployeeRequest.newBuilder()
+            .setEmployee(e).build())
+    println("Client saved:\n${response?.employee}")
 }
 
 fun addPhoto(client: EmployeeServiceGrpc.EmployeeServiceStub) {

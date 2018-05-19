@@ -8,7 +8,6 @@ import io.grpc.stub.StreamObserver
 class EmployeeService() : EmployeeServiceGrpc.EmployeeServiceImplBase() {
     override fun getByBadgeNumber(request: GetByBadgeNumberRequest?,
                                   responseObserver: StreamObserver<EmployeeResponse>?) {
-
         val badgeNumber = request?.badgeNumber
         println("getting by badge number $badgeNumber")
 
@@ -24,6 +23,21 @@ class EmployeeService() : EmployeeServiceGrpc.EmployeeServiceImplBase() {
             }
         }
         responseObserver?.onError(Exception("Employee with badge number $badgeNumber not found"))
+    }
+
+    override fun save(request: EmployeeRequest?, responseObserver: StreamObserver<EmployeeResponse>?) {
+        val newEmployee = request!!.employee
+        val e = Employee.newBuilder()
+                .setId(Employees.getInstance().size + 1)
+                .setFirstName(newEmployee.firstName)
+                .setLastName(newEmployee.lastName)
+                .setVacationAccrualRate(newEmployee.vacationAccrualRate)
+                .setVacationAccrued(newEmployee.vacationAccrued)
+                .build()
+        Employees.getInstance().add(e)
+        responseObserver!!.onNext(EmployeeResponse.newBuilder()
+                .setEmployee(e).build())
+        responseObserver!!.onCompleted()
     }
 
     override fun getAll(request: GetAllRequest?,
@@ -61,6 +75,36 @@ class EmployeeService() : EmployeeServiceGrpc.EmployeeServiceImplBase() {
                         .setIsOk(true).build())
                 responseObserver?.onCompleted()
             }
+        }
+    }
+
+    override fun saveAll(responseObserver: StreamObserver<EmployeeResponse>?): StreamObserver<EmployeeRequest> {
+        return object : StreamObserver<EmployeeRequest> {
+            override fun onNext(value: EmployeeRequest?) {
+                val newEmployee = value!!.employee
+                val e = Employee.newBuilder()
+                        .setId(Employees.getInstance().size + 1)
+                        .setFirstName(newEmployee.firstName)
+                        .setLastName(newEmployee.lastName)
+                        .setVacationAccrualRate(newEmployee.vacationAccrualRate)
+                        .setVacationAccrued(newEmployee.vacationAccrued)
+                        .build()
+                Employees.getInstance().add(e)
+                responseObserver?.onNext(EmployeeResponse.newBuilder()
+                        .setEmployee(e).build())
+            }
+
+            override fun onError(t: Throwable?) {
+                responseObserver?.onError(t)
+            }
+
+            override fun onCompleted() {
+                for (e in Employees.getInstance()) {
+                    println(e)
+                }
+                responseObserver?.onCompleted()
+            }
+
         }
     }
 }
