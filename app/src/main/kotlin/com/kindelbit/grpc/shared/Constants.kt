@@ -3,6 +3,7 @@ package com.kindelbit.grpc.shared
 import com.kindelbit.grpc.Employee
 import java.io.File
 
+const val PORT = 9000;
 val PRIVATE_KEY_FILE = File("./key.pem")
 val CERT_FILE = File("./cert.pem")
 

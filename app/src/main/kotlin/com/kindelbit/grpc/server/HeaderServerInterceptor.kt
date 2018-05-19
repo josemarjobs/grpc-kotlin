@@ -15,7 +15,11 @@ class HeaderServerInterceptor() : ServerInterceptor {
         if (sc!!.methodDescriptor.fullMethodName
                         .equals("EmployeeService/GetByBadgeNumber", true)) {
             for (key in md!!.keys()) {
-                println("$key: ${md.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER))}")
+                try {
+                    println("$key: ${md.get(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER))}")
+                } catch (e: Exception) {
+                    println("$key: exception: $e")
+                }
             }
         }
         return next!!.startCall(sc, md)
